@@ -17,78 +17,46 @@ import java.util.UUID;
  * only be a single channel of data being sent to the Pebble from an App.
  *
  * @author Will Simmons
- * @since 04/02/2016
+ * @since 07/02/2016
  */
 public class PebbleSender {
-    /**
-     * KEY for TYPE field - required for all messages.
-     * Value options: {@code DICT_TYPE_ALERT}, {@code DICT_TYPE_NEW}, {@code DICT_TYPE_ACTION} or {@code DICT_TYPE_IGNORE}.
-     */
-    public final static int DICT_TYPE_KEY = 0;
 
     /**
-     * Value for TYPE field indicating an ALERT message.
-     * ALERT messages require TYPE, HAZARD_ID, HAZARD_TYPE and HAZARD_DESC fields.
+     * Enumeration of the possible message types for communications with the Pebble.
+     * ALERT will provide a new alert for an approaching hazard - requires TYPE, HAZARD_ID, HAZARD_TYPE, HAZARD_DESC and HAZARD_DIST fields.
+     * NEW is sent from the Pebble to the phone upon the user reporting a new hazard - requires TYPE and HAZARD_TYPE fields.
+     * ACTION is sent from the Pebble when the user responds to an alert - requires TYPE, HAZARD_ID and ACTION fields.
+     * IGNORE is sent to the Pebble when an alert is no longer relevant and it should no longer be displayed - requires TYPE and HAZARD_ID fields.
+     * UPDATE is sent to the Pebble to update the approximate distance to a hazard for its alert - requires TYPE, HAZARD_ID and HAZARD_DIST fields.
      */
-    public final static int DICT_TYPE_ALERT = 0;
+    public enum PebbleMessageType {
+        ALERT, NEW, ACTION, IGNORE, UPDATE
+    }
 
     /**
-     * Value for TYPE field indicating a NEW message.
-     * NEW messages require TYPE and HAZARD_TYPE fields.
+     * Enumeration of the possible keys for all messages with the Pebble.
+     * TYPE indicates the purpose of the message - value is an ordinal of some PebbleMessageType.
+     * HAZARD_ID is the id code for the hazard under concern - value is an integer.
+     * HAZARD_TYPE is the title of the hazard - value is a string (max length 15 characters).
+     * HAZARD_DESC is the long description of the hazard - value is a string (max length 80 characters).
+     * HAZARD_DIST is the approximate distance to the hazard (in metres) - value is an int.
+     * ACTION is the action taken by the user on some alert - value is an ordinal of some PebbleActionType.
      */
-    public final static int DICT_TYPE_NEW = 1;
+    public enum PebbleMessageKey {
+        TYPE, HAZARD_ID, HAZARD_TYPE, HAZARD_DESC, HAZARD_DIST, ACTION
+    }
 
     /**
-     * Value for TYPE field indicating an ACTION message.
-     * ACTION messages require TYPE, HAZARD_ID and ACTION fields.
+     * Enumeration of the possible active actions taken by the user on some alert.
+     * ACK indicates that the user observed and acknowledged the hazard.
+     * DIS indicates that the user could not see the hazard and reported its absence.
+     * NACK indicates that the user cleared the alert list from their Pebble without acknowledgement or dismissal.
      */
-    public final static int DICT_TYPE_ACTION = 2;
+    public enum PebbleActionType {
+        ACK, DIS, NACK
+    }
 
-    /**
-     * Value for TYPE field indicating an IGNORE message.
-     * IGNORE messages require TYPE, and HAZARD_ID fields.
-     */
-    public final static int DICT_TYPE_IGNORE = 3;
-
-    /**
-     * KEY for HAZARD_ID field - required for ALERT, ACTION and IGNORE messages.
-     * Value options: Hazard ID numbers.
-     */
-    public final static int DICT_HAZARD_ID_KEY = 1;
-
-    /**
-     * KEY for HAZARD_TYPE field - required for ALERT and NEW messages.
-     * Value options: String giving brief description of hazard.
-     */
-    public final static int DICT_HAZARD_TYPE_KEY = 2;
-
-    /**
-     * KEY for HAZARD_DESC field - required for ALERT messages.
-     * Value options: String giving more detailed description of hazard.
-     */
-    public final static int DICT_HAZARD_DESC_KEY = 3;
-
-    /**
-     * KEY for ACTION field - required for ACTION messages.
-     * Value options: {@code DICT_ACTION_ACK}, {@code DICT_ACTION_DIS} or {@code DICT_ACTION_NACK}.
-     */
-    public final static int DICT_ACTION_KEY = 4;
-
-    /**
-     * Value for ACTION field indicating an acknowledgement of some alert.
-     */
-    public final static int DICT_ACTION_ACK = 0;
-
-    /**
-     * Value for ACTION field indicating the refutation of some alert.
-     */
-    public final static int DICT_ACTION_DIS = 1;
-
-    /**
-     * Value for ACTION field indicating the ignoring of an alert.
-     */
-    public final static int DICT_ACTION_NACK = 2;
-
+    
     private static PebbleKit.PebbleNackReceiver mNackReceiver;
     private static PebbleKit.PebbleAckReceiver mAckReceiver;
     private static Map<Integer, PebbleDictionary> messages;
@@ -135,6 +103,11 @@ public class PebbleSender {
                     Log.i("DataSender", "Sent " + currentSendMessageId);
                     currentSendMessageId = (currentSendMessageId + 1) % 256;
                     if (currentSendMessageId != currentQueueMessageId) {
+                        try {
+                            Thread.sleep(1000, 0);
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
                         PebbleKit.sendDataToPebbleWithTransactionId(parent.getApplicationContext(),
                                 PEBBLE_APP_UUID,
                                 messages.get(currentSendMessageId),
