@@ -5,9 +5,23 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 
+/**
+ * @author Suraj Patel <suraj-patel-95@outlook.com>
+ */
+
 class RunLoop implements Runnable {
+	/**
+	* Defines whether or not the user has initiated a run.
+	* <p>
+	* The frequency of GPS requests and cache updates is modified appropriately.
+	*/
 	public enum RunState { ACTIVE, INACTIVE }
 	private RunState runState;
+	/**
+	* Sets the runState of the loop thread.
+	* 
+	* @param rs The state to which the runState is set.
+	*/
 	public void setRunState(RunState rs) { this.runState = rs; }
 
 	private static final int CACHE_TIMEOUT = 1000; //TODO: set appropriate value (milliseconds)
@@ -23,7 +37,7 @@ class RunLoop implements Runnable {
 	private LinkedHashSet<Hazard> activeHazards;
 	private LinkedHashMap<Hazard,Date> inactiveHazards;
 
-	RunLoop() {
+	public RunLoop() {
 		this.runState = RunState.INACTIVE;
 		Location currentLocation = GPS.getCurrentLocation();
 		HazardManager.renewCache(ServerConnection.getHazards(currentLocation));
