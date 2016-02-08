@@ -34,30 +34,30 @@ public class PebbleReceiver {
             @Override
             public void receiveData(Context context, int transactionId, PebbleDictionary dict) {
                 PebbleKit.sendAckToPebble(context, transactionId);
-                switch (dict.getInteger(PebbleSender.DICT_TYPE_KEY).intValue()) {
-                    case PebbleSender.DICT_TYPE_NEW:
+                switch (PebbleSender.PebbleMessageType.values()[dict.getInteger(PebbleSender.PebbleMessageKey.TYPE.ordinal()).intValue()]) {
+                    case NEW:
                         // TODO:: Handle new hazard
                         // Invoke HazardManager.newHazard(dict);
                         Log.i("DataReceiver", "Received New Hazard");
                         break;
-                    case PebbleSender.DICT_TYPE_ACTION:
+                    case ACTION:
                         // TODO:: Handle action
-                        switch (dict.getInteger(PebbleSender.DICT_ACTION_KEY).intValue()) {
-                            case PebbleSender.DICT_ACTION_ACK:
+                        switch (PebbleSender.PebbleActionType.values()[dict.getInteger(PebbleSender.PebbleMessageKey.ACTION.ordinal()).intValue()]) {
+                            case ACK:
                                 // User acknowledged the hazard
                                 // Find hazard in alert list
                                 // Add hazard to acknowledged list
                                 // Remove hazard from alert list
                                 Log.i("DataReceiver", "Received Ack");
                                 break;
-                            case PebbleSender.DICT_ACTION_DIS:
+                            case DIS:
                                 // User did not see the hazard
                                 // Find hazard in alert list
                                 // Add hazard to refuted list
                                 // Remove hazard from alert list
                                 Log.i("DataReceiver", "Received Dismissal");
                                 break;
-                            case PebbleSender.DICT_ACTION_NACK:
+                            case NACK:
                                 // User dismissed the alert
                                 // Find hazard in alert list
                                 // Remove hazard from alert list
