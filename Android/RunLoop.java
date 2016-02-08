@@ -33,9 +33,9 @@ class RunLoop implements Runnable {
 
 	private Location lastCachedLocation;
 	private Date lastCachedTime;
-	private LinkedHashSet<Hazard> pendingHazards;
-	private LinkedHashSet<Hazard> activeHazards;
-	private LinkedHashMap<Hazard,Date> inactiveHazards;
+	private LinkedHashSet<Hazard> pendingHazards; // all hazards in our cache radius begin here
+	private LinkedHashSet<Hazard> activeHazards; // nearby hazards
+	private LinkedHashMap<Hazard,Date> inactiveHazards; // recently warned hazards
 
 	public RunLoop() {
 		this.runState = RunState.INACTIVE;
@@ -43,9 +43,9 @@ class RunLoop implements Runnable {
 		HazardManager.renewCache(ServerConnection.getHazards(currentLocation));
 		this.lastCachedLocation = currentLocation;
 		this.lastCachedTime = new Date();
-		this.pendingHazards = HazardManager.getHazardCache(); // all hazards in our cache radius begin here
-		this.activeHazards = new LinkedHashSet<Hazard>(); // nearby hazards
-		this.inactiveHazards = new LinkedHashMap<Hazard,Date>(); // recently warned hazards
+		this.pendingHazards = HazardManager.getHazardCache();
+		this.activeHazards = new LinkedHashSet<Hazard>();
+		this.inactiveHazards = new LinkedHashMap<Hazard,Date>();
 	}
 
 	@Override
