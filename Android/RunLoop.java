@@ -1,3 +1,4 @@
+import com.getpebble.android.kit.util.PebbleDictionary;
 import java.lang.InterruptedException;
 import java.lang.Runnable;
 import java.util.Date;
@@ -33,7 +34,6 @@ class RunLoop implements Runnable {
 
 	private Location lastCachedLocation;
 	private Date lastCachedTime;
-	private LinkedHashSet<Hazard> pendingHazards; // all hazards in our cache radius begin here
 	private LinkedHashSet<Hazard> activeHazards; // nearby hazards
 	private LinkedHashMap<Hazard,Date> inactiveHazards; // recently warned hazards
 
@@ -43,7 +43,6 @@ class RunLoop implements Runnable {
 		HazardManager.renewCache(ServerConnection.getHazards(currentLocation));
 		this.lastCachedLocation = currentLocation;
 		this.lastCachedTime = new Date();
-		this.pendingHazards = HazardManager.getHazardCache();
 		this.activeHazards = new LinkedHashSet<Hazard>();
 		this.inactiveHazards = new LinkedHashMap<Hazard,Date>();
 	}
@@ -51,7 +50,6 @@ class RunLoop implements Runnable {
 	@Override
 	public void run() {
 		while (true) {
-			boolean renewPending = false;
 			Location currentLocation = GPS.getCurrentLocation();
 			Date currentTime = new Date();
 
@@ -59,12 +57,6 @@ class RunLoop implements Runnable {
 			if (GPS.calculateDistance(this.lastCachedLocation, currentLocation) >= CACHE_RADIUS
                || currentTime.getTime() - this.lastCachedTime.getTime() >= CACHE_TIMEOUT) {
 				HazardManager.renewCache(ServerConnection.getHazards(currentLocation));
-				this.pendingHazards = HazardManager.getHazardCache();
-				renewPending = true;
-			}
-			if (renewPending || HazardManager.getNewHazardFlag()) {
-				this.pendingHazards.addAll(HazardManager.getNewHazards());
-				renewPending = false;
 			}
 
 			// remove hazards from the set of recently warned hazards if at least WARN_DELAY have passed
@@ -74,28 +66,34 @@ class RunLoop implements Runnable {
 					it.remove();
 			}
 
-			// move hazards from pendingHazards to activeHazards if we are at most WARN_DISTANCE away and the hazard is not in inactiveHazards
-			for (Hazard h : this.pendingHazards) {
-				if (GPS.calculateDistance(h.getLocation(), currentLocation) <= WARN_DISTANCE && !this.inactiveHazards.keySet().contains(h))
-					PebbleDataSender.sendNewHazard(h);
-			}
-
 			// (I) update distance for active hazards or (II) move the hazard to inactiveHazards if we are more than WARN_DISTANCE away
 			for (Iterator<Hazard> it = this.activeHazards.iterator(); it.hasNext(); ) {
 				Hazard h = it.next();
 				double distanceFromH = GPS.calculateDistance(h.getLocation(), currentLocation);
 				if (distanceFromH <= WARN_DISTANCE) // (I)
-					PebbleDataSender.updateActiveHazard(h, distanceFromH);
+					PebbleDataSender.send(PebbleMessage.createUpdate(h, (int) distanceFromH));
 				else { // (II)
+					PebbleDataSender.send(PebbleMessage.createIgnore(h));
 					this.inactiveHazards.put(h, currentTime);
 					it.remove();
 				}
 			}
 
+			// copy hazards to activeHazards if we are at most WARN_DISTANCE away and the hazard is not in inactiveHazards
+			for (Hazard h : HazardManager.getHazardCache()) {
+				double distanceFromH = GPS.calculateDistance(h.getLocation(), currentLocation);
+				if (distanceFromH <= WARN_DISTANCE && !this.inactiveHazards.keySet().contains(h)) {
+					PebbleDataSender.send(PebbleMessage.createAlert(h, (int) distanceFromH));
+					this.activeHazards.add(h);
+				}
+			}
+
+
 			try {
 				if (runState == RunState.ACTIVE)
 					Thread.sleep(LOOP_DELAY_ACTIVE);
-				else Thread.sleep(LOOP_DELAY_INACTIVE);
+				else
+					Thread.sleep(LOOP_DELAY_INACTIVE);
 			} catch (InterruptedException ie) {
 				break;
 			}
@@ -103,7 +101,8 @@ class RunLoop implements Runnable {
 	}
 }
 
-/* test stuff */
+/* test stuff
+   TODO: remove */
 
 class Location {
 	private double latitude;
@@ -135,11 +134,5 @@ class HazardManager {
 }
 
 class PebbleDataSender {
-	public static void sendNewHazard(Hazard h) {}
-	public static void updateActiveHazard(Hazard h, double distanceFromHazard) {}
-}
-
-class Hazard {
-	private Location loc;
-	public Location getLocation() { return loc; }
+	public static void send(PebbleDictionary pd) {}
 }

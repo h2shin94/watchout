@@ -20,43 +20,6 @@ import java.util.UUID;
  * @since 07/02/2016
  */
 public class PebbleSender {
-
-    /**
-     * Enumeration of the possible message types for communications with the Pebble.
-     * ALERT will provide a new alert for an approaching hazard - requires TYPE, HAZARD_ID, HAZARD_TYPE, HAZARD_DESC and HAZARD_DIST fields.
-     * NEW is sent from the Pebble to the phone upon the user reporting a new hazard - requires TYPE and HAZARD_TYPE fields.
-     * ACTION is sent from the Pebble when the user responds to an alert - requires TYPE, HAZARD_ID and ACTION fields.
-     * IGNORE is sent to the Pebble when an alert is no longer relevant and it should no longer be displayed - requires TYPE and HAZARD_ID fields.
-     * UPDATE is sent to the Pebble to update the approximate distance to a hazard for its alert - requires TYPE, HAZARD_ID and HAZARD_DIST fields.
-     */
-    public enum PebbleMessageType {
-        ALERT, NEW, ACTION, IGNORE, UPDATE
-    }
-
-    /**
-     * Enumeration of the possible keys for all messages with the Pebble.
-     * TYPE indicates the purpose of the message - value is an ordinal of some PebbleMessageType.
-     * HAZARD_ID is the id code for the hazard under concern - value is an integer.
-     * HAZARD_TYPE is the title of the hazard - value is a string (max length 15 characters).
-     * HAZARD_DESC is the long description of the hazard - value is a string (max length 80 characters).
-     * HAZARD_DIST is the approximate distance to the hazard (in metres) - value is an int.
-     * ACTION is the action taken by the user on some alert - value is an ordinal of some PebbleActionType.
-     */
-    public enum PebbleMessageKey {
-        TYPE, HAZARD_ID, HAZARD_TYPE, HAZARD_DESC, HAZARD_DIST, ACTION
-    }
-
-    /**
-     * Enumeration of the possible active actions taken by the user on some alert.
-     * ACK indicates that the user observed and acknowledged the hazard.
-     * DIS indicates that the user could not see the hazard and reported its absence.
-     * NACK indicates that the user cleared the alert list from their Pebble without acknowledgement or dismissal.
-     */
-    public enum PebbleActionType {
-        ACK, DIS, NACK
-    }
-
-    
     private static PebbleKit.PebbleNackReceiver mNackReceiver;
     private static PebbleKit.PebbleAckReceiver mAckReceiver;
     private static Map<Integer, PebbleDictionary> messages;
