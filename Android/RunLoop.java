@@ -49,6 +49,9 @@ class RunLoop implements Runnable {
 		this.inactiveHazards = new LinkedHashMap<Hazard,Date>();
 	}
 
+	/**
+	* Allows removal of hazards from the set of active hazards, for the case where the user actively dismisses the hazard.
+	*/
 	public void removeActiveHazard(int hazardID) {
 		synchronized(this.activeHazards) {
 			for (Iterator<Hazard> it = activeHazards.iterator(); it.hasNext(); ) {
@@ -103,7 +106,6 @@ class RunLoop implements Runnable {
 					this.activeHazards.add(h);
 				}
 			}
-
 
 			try {
 				if (runState == RunState.ACTIVE)
