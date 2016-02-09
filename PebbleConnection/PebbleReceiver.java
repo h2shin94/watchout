@@ -1,5 +1,3 @@
-package uk.ac.cam.wvs22.watchoutpebbletools;
-
 import android.content.Context;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
@@ -18,6 +16,7 @@ import com.getpebble.android.kit.util.PebbleDictionary;
 public class PebbleReceiver {
     private static PebbleKit.PebbleDataReceiver mDataReceiver;
     private static AppCompatActivity parent;
+    private static RunLoop runloop;
 
     private PebbleReceiver() {}
 
@@ -28,13 +27,14 @@ public class PebbleReceiver {
      *
      * @param mainAct Main Activity of the App.
      */
-    public static void startReceiver(AppCompatActivity mainAct) {
+    public static void startReceiver(AppCompatActivity mainAct, RunLoop rl) {
         parent = mainAct;
+        runloop = rl;
         mDataReceiver = new PebbleKit.PebbleDataReceiver(PebbleSender.PEBBLE_APP_UUID) {
             @Override
             public void receiveData(Context context, int transactionId, PebbleDictionary dict) {
                 PebbleKit.sendAckToPebble(context, transactionId);
-                switch (PebbleSender.PebbleMessageType.values()[dict.getInteger(PebbleSender.PebbleMessageKey.TYPE.ordinal()).intValue()]) {
+                switch (PebbleMessage.Type.values()[dict.getInteger(PebbleMessage.Key.TYPE.ordinal()).intValue()]) {
                     case NEW:
                         // TODO:: Handle new hazard
                         // Invoke HazardManager.newHazard(dict);
@@ -42,12 +42,14 @@ public class PebbleReceiver {
                         break;
                     case ACTION:
                         // TODO:: Handle action
-                        switch (PebbleSender.PebbleActionType.values()[dict.getInteger(PebbleSender.PebbleMessageKey.ACTION.ordinal()).intValue()]) {
+                        int id = dict.getInteger(PebbleMessage.Key.HAZARD_ID.ordinal()).intValue();
+                        switch (PebbleMessage.ActionType.values()[dict.getInteger(PebbleMessage.Key.ACTION.ordinal()).intValue()]) {
                             case ACK:
                                 // User acknowledged the hazard
                                 // Find hazard in alert list
                                 // Add hazard to acknowledged list
                                 // Remove hazard from alert list
+                                runloop.removeActiveHazard(id);
                                 Log.i("DataReceiver", "Received Ack");
                                 break;
                             case DIS:
@@ -55,12 +57,14 @@ public class PebbleReceiver {
                                 // Find hazard in alert list
                                 // Add hazard to refuted list
                                 // Remove hazard from alert list
+                                runloop.removeActiveHazard(id);
                                 Log.i("DataReceiver", "Received Dismissal");
                                 break;
                             case NACK:
                                 // User dismissed the alert
                                 // Find hazard in alert list
                                 // Remove hazard from alert list
+                                runloop.removeActiveHazard(id);
                                 Log.i("DataReceiver", "Received Nack");
                                 break;
                         }
