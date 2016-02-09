@@ -1,10 +1,12 @@
 import com.getpebble.android.kit.util.PebbleDictionary;
 import java.lang.InterruptedException;
 import java.lang.Runnable;
+import java.util.Collections;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
+import java.util.Set;
 
 /**
  * @author Suraj Patel <suraj-patel-95@outlook.com>
@@ -34,7 +36,7 @@ class RunLoop implements Runnable {
 
 	private Location lastCachedLocation;
 	private Date lastCachedTime;
-	private LinkedHashSet<Hazard> activeHazards; // nearby hazards
+	private Set<Hazard> activeHazards; // nearby hazards
 	private LinkedHashMap<Hazard,Date> inactiveHazards; // recently warned hazards
 
 	public RunLoop() {
@@ -43,8 +45,20 @@ class RunLoop implements Runnable {
 		HazardManager.renewCache(ServerConnection.getHazards(currentLocation));
 		this.lastCachedLocation = currentLocation;
 		this.lastCachedTime = new Date();
-		this.activeHazards = new LinkedHashSet<Hazard>();
+		this.activeHazards = Collections.synchronizedSet(new LinkedHashSet<Hazard>());
 		this.inactiveHazards = new LinkedHashMap<Hazard,Date>();
+	}
+
+	public void removeActiveHazard(int hazardID) {
+		synchronized(this.activeHazards) {
+			for (Iterator<Hazard> it = activeHazards.iterator(); it.hasNext(); ) {
+				Hazard h = it.next();
+				if (h.getId() == hazardID) {
+					it.remove();
+					break;
+				}
+			}
+		}
 	}
 
 	@Override
@@ -67,15 +81,17 @@ class RunLoop implements Runnable {
 			}
 
 			// (I) update distance for active hazards or (II) move the hazard to inactiveHazards if we are more than WARN_DISTANCE away
-			for (Iterator<Hazard> it = this.activeHazards.iterator(); it.hasNext(); ) {
-				Hazard h = it.next();
-				double distanceFromH = GPS.calculateDistance(h.getLocation(), currentLocation);
-				if (distanceFromH <= WARN_DISTANCE) // (I)
-					PebbleDataSender.send(PebbleMessage.createUpdate(h, (int) distanceFromH));
-				else { // (II)
-					PebbleDataSender.send(PebbleMessage.createIgnore(h));
-					this.inactiveHazards.put(h, currentTime);
-					it.remove();
+			synchronized(this.activeHazards) {
+				for (Iterator<Hazard> it = this.activeHazards.iterator(); it.hasNext(); ) {
+					Hazard h = it.next();
+					double distanceFromH = GPS.calculateDistance(h.getLocation(), currentLocation);
+					if (distanceFromH <= WARN_DISTANCE) // (I)
+						PebbleDataSender.send(PebbleMessage.createUpdate(h, (int) distanceFromH));
+					else { // (II)
+						PebbleDataSender.send(PebbleMessage.createIgnore(h));
+						this.inactiveHazards.put(h, currentTime);
+						it.remove();
+					}
 				}
 			}
 
