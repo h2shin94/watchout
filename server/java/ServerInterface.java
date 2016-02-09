@@ -116,13 +116,9 @@ public class ServerInterface{
 
         try{
             JSONObject json = new JSONObject(
-                    "{\n" +
-                    "\t\"age\":100,\n" +
-                    "\t\"name\":\"mkyong.com\",\n" +
-                    "\t\"messages\":[\"msg 1\",\"msg 2\",\"msg 3\"]\n" +
-                    "}");
+                    "{\"new\":[{\"latitude\":\"52.1234\", \"longitude\":\"52.1234\",\"title\":\"New Hazard!\",\"reported\":\"16-12-12 11:11:11\",\"expires\":\"17-11-11 11:11:11\",\"description\":\"new inserted hazard\", \"acks\":\"0\", \"diss\":\"0\"}], \"update\":[{\"id\":\"5\", \"expires\":\"17-11-11 11:11:11\", \"acks\":\"6\", \"diss\":\"6\"}]}");
 
-            System.out.println(server.uploadHazards(json));
+            server.uploadHazards(json);
         }catch (IOException | JSONException e) {
             e.printStackTrace();
         }
