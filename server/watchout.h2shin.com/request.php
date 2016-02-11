@@ -21,7 +21,16 @@
 	$data = $db -> getAll($query, $tableName, $latitude, $latitude, $longitude);
 	//Above gets all data as associative array already.
 
-	$encoded = array('hazards' => $data);
+
+	$labelled = array();
+
+	$count = 0;
+	foreach ($data as $hazard) {
+		$count++;
+		array_push($labelled, array("hazard".$count => $hazard));
+	}
+
+	$encoded = array('hazards' => $labelled, 'size' => $count);
 
 	print json_encode($encoded);
 ?>

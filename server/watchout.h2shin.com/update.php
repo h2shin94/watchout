@@ -2,6 +2,8 @@
 	require_once("includes/initialise.php");
 	$data = array();
 
+	//Perhaps need to make this more defensive against wrong input.
+
 	if (!($data = json_decode(file_get_contents("php://input"), true))) {
 		exit("Provided string is not a correctly formatted JSON String");
 	}
