@@ -5,14 +5,17 @@ import org.json.JSONObject;
 import com.google.android.gms.maps.model.LatLng;
 import java.text.SimpleDateFormat;
 import java.text.ParseException;
+import java.util.Date;
 
 public class Hazard {
 
     private  int id, acks, diss;
     private  String title, description;
     private  double latitude, longitude;
-    private  java.util.Date reported, expires;
+    private  Date reported, expires;
+    private SimpleDateFormat dateParser = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
+    
     public Hazard(JSONObject jsonInput) {
 
         try {
@@ -23,20 +26,17 @@ public class Hazard {
             description = jsonInput.getString("description");
             latitude = jsonInput.getDouble("latitude");
             longitude = jsonInput.getDouble("longitude");
-            SimpleDateFormat dateParser = new SimpleDateFormat("dd-MM-yy HH:mm:ss");
-            //reported = dateParser.parse(jsonInput.getString("reported"));
-            //Set expires to 1 day after reported just as a test for now
-            //expires.setTime(reported.getTime() + 86400000);
-
+            reported = dateParser.parse(jsonInput.getString("reported"));
+            expires = dateParser.parse(jsonInput.getString("expires"));
         } catch (JSONException je) {
 
             je.printStackTrace();
 
-        } //catch (ParseException pe){
+        } catch (ParseException pe){
 
-           // pe.printStackTrace();
+            pe.printStackTrace();
 
-        //}
+        }
 
     }
 
@@ -81,6 +81,14 @@ public class Hazard {
         diss++;
     }
 
+    public Date getReported(){
+        return reported;
+    }
+
+    public Date getExpires(){
+        return expires;
+    }
+
     public JSONObject toJSON(){
         JSONObject outputJSON = new JSONObject();
         try {
@@ -91,6 +99,10 @@ public class Hazard {
             outputJSON.put("acks", acks);
             outputJSON.put("diss", diss);
             outputJSON.put("description", description);
+            String reportedString = dateParser.format(reported);
+            String expiresString = dateParser.format(expires);
+            outputJSON.put("reported", reportedString);
+            outputJSON.put("expires", expiresString);
 
         } catch ( JSONException e) {
 
