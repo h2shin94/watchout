@@ -23,18 +23,20 @@
 	$deleteExpiredQuiry = "DELETE FROM `hazards` WHERE expires < NOW()";
 
 
+	//Increment ack or diss according to teh value of "response"
 	if ($updateHazards) {
 		foreach ($updateHazards as $row) {
-		if ($row["response"] == "ack") {
-			$updateQuery = $updateQuery1." `acks`=`acks`+1 ".$updateQuery2;
-			$db -> query($updateQuery, $row["expires"], $row["id"]);
-		}else{
-			$updateQuery = $updateQuery1." `diss`=`diss`+1 ".$updateQuery2;
-			$db -> query($updateQuery, $row["expires"], $row["id"]);
+			if ($row["response"] == "ack") {
+				$updateQuery = $updateQuery1." `acks`=`acks`+1 ".$updateQuery2;
+				$db -> query($updateQuery, $row["expires"], $row["id"]);
+			}else{
+				$updateQuery = $updateQuery1." `diss`=`diss`+1 ".$updateQuery2;
+				$db -> query($updateQuery, $row["expires"], $row["id"]);
+			}
 		}
 	}
-	}
 
+	//add all new hazards
 	if ($newHazards) {
 		foreach ($newHazards as $row) {
 		$db -> query($insertQuery, $row["latitude"], $row["longitude"], $row["title"], $row["reported"], $row["expires"], $row["description"], $row["acks"], $row["diss"]);
@@ -45,7 +47,7 @@
 	$db -> query($deleteExpiredQuiry);
 
 	$archive = "";
-
+	//archive expired hazards
 	foreach ($expired as $row) {
 		$archive .= $row["id"] . ", " . $row["latitude"] . ", " .  $row["longitude"] . ", " .  $row["title"] . ", " .  $row["reported"] . ", " .  $row["expires"] . ", " .  $row["description"] . ", " .  $row["acks"] . ", " .  $row["diss"] . ";\n";
 	}
