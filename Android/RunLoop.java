@@ -1,6 +1,10 @@
 import com.getpebble.android.kit.util.PebbleDictionary;
+
+import org.json.JSONObject;
+
 import java.lang.InterruptedException;
 import java.lang.Runnable;
+import java.io.IOException;
 import java.util.Collections;
 import java.util.Date;
 import java.util.Iterator;
@@ -42,7 +46,11 @@ class RunLoop implements Runnable {
 	public RunLoop() {
 		this.runState = RunState.INACTIVE;
 		Location currentLocation = GPS.getCurrentLocation();
-		HazardManager.renewCache(ServerConnection.getHazards(currentLocation));
+		try {
+			HazardManager.renewCache(ServerInterface.getHazards(currentLocation));
+		} catch (IOException ioe) {
+			ioe.printStackTrace();
+		}
 		this.lastCachedLocation = currentLocation;
 		this.lastCachedTime = new Date();
 		this.activeHazards = Collections.synchronizedSet(new LinkedHashSet<Hazard>());
@@ -73,7 +81,11 @@ class RunLoop implements Runnable {
 			// update the cache if the distance from the last update has equalled or exceeded CACHE_RADIUS or the time from the last update is at least CACHE_TIMEOUT
 			if (GPS.calculateDistance(this.lastCachedLocation, currentLocation) >= CACHE_RADIUS
                || currentTime.getTime() - this.lastCachedTime.getTime() >= CACHE_TIMEOUT) {
-				HazardManager.renewCache(ServerConnection.getHazards(currentLocation));
+				try {
+					HazardManager.renewCache(ServerInterface.getHazards(currentLocation));
+				} catch (IOException ioe) {
+					ioe.printStackTrace();
+				}
 			}
 
 			// remove hazards from the set of recently warned hazards if at least WARN_DELAY have passed
@@ -122,30 +134,13 @@ class RunLoop implements Runnable {
 /* test stuff
    TODO: remove */
 
-class Location {
-	private double latitude;
-	private double longitude;
-
-	public double getLatitude() { return latitude; }
-	public double getLongitude() { return longitude; }
-
-	Location(double latitude, double longitude) {
-		this.latitude = latitude;
-		this.longitude = longitude;
-	}
-}
-
 class GPS {
 	public static Location getCurrentLocation() { return new Location(10,20); }
 	public static double calculateDistance(Location n, Location m) { return 1000; }
 }
 
-class ServerConnection {
-	public static byte[] getHazards(Location l) { return new byte[1]; }
-}
-
 class HazardManager {
-	public static void renewCache(byte[] locations) { }
+	public static void renewCache(JSONObject locations) { }
 	public static LinkedHashSet<Hazard> getHazardCache() { return new LinkedHashSet<Hazard>(); }
 	public static LinkedHashSet<Hazard> getNewHazards() { return new LinkedHashSet<Hazard>(); }
 	public static boolean getNewHazardFlag() { return true; }
