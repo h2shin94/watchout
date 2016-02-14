@@ -108,17 +108,16 @@ public class ServerInterface{
     */
     public static void main(String[] args){
         ServerInterface server = new ServerInterface();
-        try {
-           System.out.println(server.getHazards(new Location(52.213388, 0.102448)).toString(4));
-        }catch (IOException | JSONException e) {
-           e.printStackTrace();
-        }
+        // try {
+        //    System.out.println(server.getHazards(new Location(52.213388, 0.102448)).toString(4));
+        // }catch (IOException | JSONException e) {
+        //    e.printStackTrace();
+        // }
 
         // try{
         //     JSONObject json = new JSONObject(
-        //             "{\"new\":[{\"latitude\":\"52.1234\", \"longitude\":\"52.1234\",\"title\":\"New Hazard!\",\"reported\":\"16-12-12 11:11:11\",\"expires\":\"17-11-11 11:11:11\",\"description\":\"new inserted hazard\", \"acks\":\"0\", \"diss\":\"0\"}], \"update\":[{\"id\":\"5\", \"expires\":\"17-11-11 11:11:11\", \"acks\":\"6\", \"diss\":\"6\"}]}");
-
-        //     server.uploadHazards(json);
+        //             "{\"update\":{\"expires\":\"2016-10-01 00:00:00\",\"response\":\"ack\", \"id\":\"27\"}}");
+        //     System.out.println(server.uploadHazards(json));
         // }catch (IOException | JSONException e) {
         //     e.printStackTrace();
         // }

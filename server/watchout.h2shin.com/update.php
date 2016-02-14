@@ -4,16 +4,20 @@
 
 	//Perhaps need to make this more defensive against wrong input.
 
-	if (!($data = json_decode(file_get_contents("php://input"), true))) {
-		exit("Provided string is not a correctly formatted JSON String");
-	}
+	// if (!($data = json_decode(file_get_contents("php://input"), true))) {
+	// 	exit("Provided string is not a correctly formatted JSON String");
+	// }
+
+	$data = json_decode("{\"update\":{\"expires\":\"2016-10-01 00:00:00\",\"response\":\"ack\", \"id\":\"27\"}}");
 
 	print_r($data);
 
 	$newHazards = $data["new"];
 	$updateHazards = $data["update"];
 
-	$updateQuery = "UPDATE `hazards` SET `expires`=?s ,`acks`=?s ,`diss`=?s WHERE id = ?s";
+	$updateQuery1 = "UPDATE `hazards` SET `expires`=?s,";
+	$updateQuery2 = "WHERE id = ?s";
+	$updateQuery = "";
 
 	$insertQuery = "INSERT INTO `hazards` (`latitude`, `longitude`, `title`, `reported`, `expires`, `description`, `acks`, `diss`) VALUES (?s,?s,?s,?s,?s,?s,?s,?s)";
 
@@ -22,7 +26,15 @@
 
 
 	foreach ($updateHazards as $row) {
-		$db -> query($updateQuery, $row["expires"], $row["acks"], $row["diss"], $row["id"]);
+		if ($row["response"] == "ack") {
+			$updateQuery = $updateQuery1." `acks`=`acks`+1 ".$updateQuery2;
+			echo $updateQuery;
+			$db -> query($updateQuery, $row["expires"], $row["acks"], $row["id"]);
+		}else{
+			$updateQuery = $updateQuery1." `diss`=`diss`+1 ".$updateQuery2;
+			echo $updateQuery;
+			$db -> query($updateQuery, $row["expires"], $row["diss"], $row["id"]);
+		}
 	}
 
 	foreach ($newHazards as $row) {
