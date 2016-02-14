@@ -4,13 +4,11 @@
 
 	//Perhaps need to make this more defensive against wrong input.
 
-	// if (!($data = json_decode(file_get_contents("php://input"), true))) {
-	// 	exit("Provided string is not a correctly formatted JSON String");
-	// }
+	if (!($data = json_decode(file_get_contents("php://input"), true))) {
+		exit("Provided string is not a correctly formatted JSON String");
+	}
 
-	$data = json_decode("{\"update\":{\"expires\":\"2016-10-01 00:00:00\",\"response\":\"ack\", \"id\":\"27\"}}");
-
-	print_r($data);
+	var_dump($data);
 
 	$newHazards = $data["new"];
 	$updateHazards = $data["update"];
@@ -25,27 +23,31 @@
 	$deleteExpiredQuiry = "DELETE FROM `hazards` WHERE expires < NOW()";
 
 
-	foreach ($updateHazards as $row) {
-		if ($row["response"] == "ack") {
-			$updateQuery = $updateQuery1." `acks`=`acks`+1 ".$updateQuery2;
-			echo $updateQuery;
-			$db -> query($updateQuery, $row["expires"], $row["acks"], $row["id"]);
-		}else{
-			$updateQuery = $updateQuery1." `diss`=`diss`+1 ".$updateQuery2;
-			echo $updateQuery;
-			$db -> query($updateQuery, $row["expires"], $row["diss"], $row["id"]);
+	//Increment ack or diss according to teh value of "response"
+	if ($updateHazards) {
+		foreach ($updateHazards as $row) {
+			if ($row["response"] == "ack") {
+				$updateQuery = $updateQuery1." `acks`=`acks`+1 ".$updateQuery2;
+				$db -> query($updateQuery, $row["expires"], $row["id"]);
+			}else{
+				$updateQuery = $updateQuery1." `diss`=`diss`+1 ".$updateQuery2;
+				$db -> query($updateQuery, $row["expires"], $row["id"]);
+			}
 		}
 	}
 
-	foreach ($newHazards as $row) {
+	//add all new hazards
+	if ($newHazards) {
+		foreach ($newHazards as $row) {
 		$db -> query($insertQuery, $row["latitude"], $row["longitude"], $row["title"], $row["reported"], $row["expires"], $row["description"], $row["acks"], $row["diss"]);
+		}
 	}
 
 	$expired = $db -> getAll($getExpiredQuery);
 	$db -> query($deleteExpiredQuiry);
 
 	$archive = "";
-
+	//archive expired hazards
 	foreach ($expired as $row) {
 		$archive .= $row["id"] . ", " . $row["latitude"] . ", " .  $row["longitude"] . ", " .  $row["title"] . ", " .  $row["reported"] . ", " .  $row["expires"] . ", " .  $row["description"] . ", " .  $row["acks"] . ", " .  $row["diss"] . ";\n";
 	}
