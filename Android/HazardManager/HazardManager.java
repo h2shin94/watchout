@@ -15,9 +15,9 @@ import java.util.Iterator;
 
 public final class HazardManager {
     
-    private static Set<Hazard> hazardSet = new HashSet();
+    private static Set<Hazard> hazardSet = new HashSet<Hazard>();
     
-    public static Set getHazardSet(){
+    public static Set<Hazard> getHazardSet(){
         return hazardSet;
     }
     

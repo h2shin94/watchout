@@ -47,9 +47,11 @@ class RunLoop implements Runnable {
 		this.runState = RunState.INACTIVE;
 		Location currentLocation = GPS.getCurrentLocation();
 		try {
-			HazardManager.renewCache(ServerInterface.getHazards(currentLocation));
+			HazardManager.populateHazardSet(ServerInterface.getHazards(currentLocation));
 		} catch (IOException ioe) {
 			ioe.printStackTrace();
+		} catch (JSONException jsone) {
+			jsone.printStackTrace();
 		}
 		this.lastCachedLocation = currentLocation;
 		this.lastCachedTime = new Date();
@@ -82,9 +84,11 @@ class RunLoop implements Runnable {
 			if (GPS.calculateDistance(this.lastCachedLocation, currentLocation) >= CACHE_RADIUS
                || currentTime.getTime() - this.lastCachedTime.getTime() >= CACHE_TIMEOUT) {
 				try {
-					HazardManager.renewCache(ServerInterface.getHazards(currentLocation));
+					HazardManager.populateHazardSet(ServerInterface.getHazards(currentLocation));
 				} catch (IOException ioe) {
 					ioe.printStackTrace();
+				} catch (JSONException jsone) {
+					jsone.printStackTrace();
 				}
 			}
 
@@ -101,9 +105,9 @@ class RunLoop implements Runnable {
 					Hazard h = it.next();
 					double distanceFromH = GPS.calculateDistance(h.getLocation(), currentLocation);
 					if (distanceFromH <= WARN_DISTANCE) // (I)
-						PebbleDataSender.send(PebbleMessage.createUpdate(h, (int) distanceFromH));
+						PebbleSender.send(PebbleMessage.createUpdate(h, (int) distanceFromH));
 					else { // (II)
-						PebbleDataSender.send(PebbleMessage.createIgnore(h));
+						PebbleSender.send(PebbleMessage.createIgnore(h));
 						this.inactiveHazards.put(h, currentTime);
 						it.remove();
 					}
@@ -114,7 +118,7 @@ class RunLoop implements Runnable {
 			for (Hazard h : HazardManager.getHazardCache()) {
 				double distanceFromH = GPS.calculateDistance(h.getLocation(), currentLocation);
 				if (distanceFromH <= WARN_DISTANCE && !this.inactiveHazards.keySet().contains(h)) {
-					PebbleDataSender.send(PebbleMessage.createAlert(h, (int) distanceFromH));
+					PebbleSender.send(PebbleMessage.createAlert(h, (int) distanceFromH));
 					this.activeHazards.add(h);
 				}
 			}
@@ -140,12 +144,12 @@ class GPS {
 }
 
 class HazardManager {
-	public static void renewCache(JSONObject locations) { }
-	public static LinkedHashSet<Hazard> getHazardCache() { return new LinkedHashSet<Hazard>(); }
+	public static void populateHazardSet(JSONObject locations) { }
+	public static Set<Hazard> getHazardSet() { return new LinkedHashSet<Hazard>(); }
 	public static LinkedHashSet<Hazard> getNewHazards() { return new LinkedHashSet<Hazard>(); }
 	public static boolean getNewHazardFlag() { return true; }
 }
 
-class PebbleDataSender {
+class PebbleSender {
 	public static void send(PebbleDictionary pd) {}
 }
