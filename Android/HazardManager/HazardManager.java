@@ -10,21 +10,25 @@ import java.util.HashSet;
 import grouplima.watchout.Hazard;
 import grouplima.watchout.Location;
 import java.util.Date;
+import java.util.Iterator;
+
 
 public final class HazardManager {
-
-    private static Set hazardSet = new HashSet<Hazard>();
-
+    
+    private static Set<Hazard> hazardSet = new HashSet();
+    
     public static Set getHazardSet(){
         return hazardSet;
     }
-
+    
+    Location currLoc = new Location(52.213388, 0.102448);
+    
     private static SimpleDateFormat dateParser = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-
+    
     private HazardManager(){
-
+        
     }
-
+    
     public static void populateHazardSet(JSONObject input){
         int numberOfHazards;
         JSONArray results;
@@ -41,7 +45,7 @@ public final class HazardManager {
             e.printStackTrace();
         }
     }
-
+    
     public static JSONObject updateHazard(Hazard update, String ackOrDiss){
         JSONArray upArray = new JSONArray();
         JSONObject innerOb = new JSONObject();
@@ -64,7 +68,7 @@ public final class HazardManager {
         }
         return returnJson;
     }
-
+    
     public static JSONObject newHazard(Hazard newHazard){
         JSONArray upArray = new JSONArray();
         upArray.put(newHazard.toJSON());
@@ -75,5 +79,15 @@ public final class HazardManager {
             je.printStackTrace();
         }
         return returnJson;
+    }
+    
+    public static Hazard getHazardByID(int id){
+        Hazard output = null;
+        for(Hazard h : hazardSet){
+            if (h.getId() == id){
+                output = h;
+            }
+        }
+        return output;
     }
 }
