@@ -23,6 +23,8 @@ public class Hazard {
         description = newdescription;
         latitude = newlat;
         longitude = newlong;
+        reported = new Date();
+        expires = new Date(reported.getTime() + 100000);
     }
     
     public Hazard(JSONObject jsonInput) {
@@ -83,11 +85,11 @@ public class Hazard {
     }
     
     public void increaseAcks(){
-        acks++;
+        HazardManager.updateHazard(this, "ack");
     }
     
     public void increaseDiss(){
-        diss++;
+        HazardManager.updateHazard(this, "diss");
     }
     
     public Date getReported(){
