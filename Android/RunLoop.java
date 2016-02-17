@@ -1,7 +1,8 @@
+package uk.ac.cam.grpproj.lima2016.watchout;
+
+import com.google.android.gms.maps.model.LatLng;
 import com.getpebble.android.kit.util.PebbleDictionary;
-
 import org.json.JSONObject;
-
 import java.lang.InterruptedException;
 import java.lang.Runnable;
 import java.io.IOException;
@@ -11,6 +12,7 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.Set;
+import org.json.JSONException;
 
 /**
  * @author Suraj Patel <suraj-patel-95@outlook.com>
@@ -18,17 +20,17 @@ import java.util.Set;
 
 class RunLoop implements Runnable {
 	/**
-	* Defines whether or not the user has initiated a run.
-	* <p>
-	* The frequency of GPS requests and cache updates is modified appropriately.
-	*/
+	 * Defines whether or not the user has initiated a run.
+	 * <p>
+	 * The frequency of GPS requests and cache updates is modified appropriately.
+	 */
 	public enum RunState { ACTIVE, INACTIVE }
 	private RunState runState;
 	/**
-	* Sets the runState of the loop thread.
-	* 
-	* @param rs The state to which the runState is set.
-	*/
+	 * Sets the runState of the loop thread.
+	 *
+	 * @param rs The state to which the runState is set.
+	 */
 	public void setRunState(RunState rs) { this.runState = rs; }
 
 	private static final int CACHE_TIMEOUT = 1000; //TODO: set appropriate value (milliseconds)
@@ -38,14 +40,14 @@ class RunLoop implements Runnable {
 	private static final double WARN_DISTANCE = 1000; //TODO: set appropriate value
 	private static final int WARN_DELAY = 1000; //TODO: set appropriate value
 
-	private Location lastCachedLocation;
+	private LatLng lastCachedLocation;
 	private Date lastCachedTime;
 	private Set<Hazard> activeHazards; // nearby hazards
 	private LinkedHashMap<Hazard,Date> inactiveHazards; // recently warned hazards
 
 	public RunLoop() {
 		this.runState = RunState.INACTIVE;
-		Location currentLocation = GPS.getCurrentLocation();
+		LatLng currentLocation = GPS.getCurrentLocation();
 		try {
 			HazardManager.populateHazardSet(ServerInterface.getHazards(currentLocation));
 		} catch (IOException ioe) {
@@ -60,8 +62,8 @@ class RunLoop implements Runnable {
 	}
 
 	/**
-	* Allows removal of hazards from the set of active hazards, for the case where the user actively dismisses the hazard.
-	*/
+	 * Allows removal of hazards from the set of active hazards, for the case where the user actively dismisses the hazard.
+	 */
 	public void removeActiveHazard(int hazardID) {
 		synchronized(this.activeHazards) {
 			for (Iterator<Hazard> it = activeHazards.iterator(); it.hasNext(); ) {
@@ -77,12 +79,12 @@ class RunLoop implements Runnable {
 	@Override
 	public void run() {
 		while (true) {
-			Location currentLocation = GPS.getCurrentLocation();
+			LatLng currentLocation = GPS.getCurrentLocation();
 			Date currentTime = new Date();
 
 			// update the cache if the distance from the last update has equalled or exceeded CACHE_RADIUS or the time from the last update is at least CACHE_TIMEOUT
 			if (GPS.calculateDistance(this.lastCachedLocation, currentLocation) >= CACHE_RADIUS
-               || currentTime.getTime() - this.lastCachedTime.getTime() >= CACHE_TIMEOUT) {
+					|| currentTime.getTime() - this.lastCachedTime.getTime() >= CACHE_TIMEOUT) {
 				try {
 					HazardManager.populateHazardSet(ServerInterface.getHazards(currentLocation));
 				} catch (IOException ioe) {
@@ -103,7 +105,7 @@ class RunLoop implements Runnable {
 			synchronized(this.activeHazards) {
 				for (Iterator<Hazard> it = this.activeHazards.iterator(); it.hasNext(); ) {
 					Hazard h = it.next();
-					double distanceFromH = GPS.calculateDistance(h.getLocation(), currentLocation);
+					double distanceFromH = GPS.calculateDistance(h.getLatLong(), currentLocation);
 					if (distanceFromH <= WARN_DISTANCE) // (I)
 						PebbleSender.send(PebbleMessage.createUpdate(h, (int) distanceFromH));
 					else { // (II)
@@ -115,8 +117,8 @@ class RunLoop implements Runnable {
 			}
 
 			// copy hazards to activeHazards if we are at most WARN_DISTANCE away and the hazard is not in inactiveHazards
-			for (Hazard h : HazardManager.getHazardCache()) {
-				double distanceFromH = GPS.calculateDistance(h.getLocation(), currentLocation);
+			for (Hazard h : HazardManager.getHazardSet()) {
+				double distanceFromH = GPS.calculateDistance(h.getLatLong(), currentLocation);
 				if (distanceFromH <= WARN_DISTANCE && !this.inactiveHazards.keySet().contains(h)) {
 					PebbleSender.send(PebbleMessage.createAlert(h, (int) distanceFromH));
 					this.activeHazards.add(h);
@@ -139,17 +141,17 @@ class RunLoop implements Runnable {
    TODO: remove */
 
 class GPS {
-	public static Location getCurrentLocation() { return new Location(10,20); }
-	public static double calculateDistance(Location n, Location m) { return 1000; }
+	public static LatLng getCurrentLocation() { return new LatLng(10, 20); }
+	public static double calculateDistance(LatLng n, LatLng m) { return 1000; }
 }
 
-class HazardManager {
+/*class HazardManager {
 	public static void populateHazardSet(JSONObject locations) { }
 	public static Set<Hazard> getHazardSet() { return new LinkedHashSet<Hazard>(); }
 	public static LinkedHashSet<Hazard> getNewHazards() { return new LinkedHashSet<Hazard>(); }
 	public static boolean getNewHazardFlag() { return true; }
-}
+}*/
 
-class PebbleSender {
+/*class PebbleSender {
 	public static void send(PebbleDictionary pd) {}
-}
+}*/

@@ -1,9 +1,12 @@
+package uk.ac.cam.grpproj.lima2016.watchout;
+
 import android.content.Context;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
-
 import com.getpebble.android.kit.PebbleKit;
 import com.getpebble.android.kit.util.PebbleDictionary;
+
+import java.io.IOException;
 
 /**
  * The {@code PebbleReceiver} class handles connections from some connected Pebble (if one is connected).
@@ -27,7 +30,7 @@ public class PebbleReceiver {
      *
      * @param mainAct Main Activity of the App.
      */
-    public static void startReceiver(AppCompatActivity mainAct, RunLoop rl) {
+    public static void startReceiver(final AppCompatActivity mainAct, RunLoop rl) {
         parent = mainAct;
         runloop = rl;
         mDataReceiver = new PebbleKit.PebbleDataReceiver(PebbleSender.PEBBLE_APP_UUID) {
@@ -37,7 +40,7 @@ public class PebbleReceiver {
                 switch (PebbleMessage.Type.values()[dict.getInteger(PebbleMessage.Key.TYPE.ordinal()).intValue()]) {
                     case NEW:
                         // TODO:: Handle new hazard
-                        // Invoke HazardManager.newHazard(dict);
+
                         Log.i("DataReceiver", "Received New Hazard");
                         break;
                     case ACTION:
@@ -46,24 +49,26 @@ public class PebbleReceiver {
                         switch (PebbleMessage.ActionType.values()[dict.getInteger(PebbleMessage.Key.ACTION.ordinal()).intValue()]) {
                             case ACK:
                                 // User acknowledged the hazard
-                                // Find hazard in alert list
-                                // Add hazard to acknowledged list
-                                // Remove hazard from alert list
+                                try {
+                                    ServerInterface.uploadHazards(HazardManager.getHazardByID(id).increaseAcks());
+                                } catch (IOException ioe) {
+                                    ioe.printStackTrace();
+                                }
                                 runloop.removeActiveHazard(id);
                                 Log.i("DataReceiver", "Received Ack");
                                 break;
                             case DIS:
                                 // User did not see the hazard
-                                // Find hazard in alert list
-                                // Add hazard to refuted list
-                                // Remove hazard from alert list
+                                try {
+                                    ServerInterface.uploadHazards(HazardManager.getHazardByID(id).increaseDiss());
+                                } catch (IOException ioe) {
+                                    ioe.printStackTrace();
+                                }
                                 runloop.removeActiveHazard(id);
                                 Log.i("DataReceiver", "Received Dismissal");
                                 break;
                             case NACK:
                                 // User dismissed the alert
-                                // Find hazard in alert list
-                                // Remove hazard from alert list
                                 runloop.removeActiveHazard(id);
                                 Log.i("DataReceiver", "Received Nack");
                                 break;

@@ -1,4 +1,4 @@
-package uk.ac.cam.wvs22.watchoutpebbletools;
+package uk.ac.cam.grpproj.lima2016.watchout;
 
 import android.content.Context;
 import android.support.v7.app.AppCompatActivity;
