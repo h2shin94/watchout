@@ -2,3 +2,7 @@
 *.class
 *.jar
 *.swp
+
+Android/Hazard.java
+
+Android/Location.java
