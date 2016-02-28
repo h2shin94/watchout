@@ -41,6 +41,7 @@ public class ServerInterface{
         String query = String.format("longitude=%s&latitude=%s", longitude, latitude);
         //encode the post query
 
+        //Set a POST connection
         URL url = new URL(site + "/request.php");
         HttpURLConnection conn = (HttpURLConnection) url.openConnection();
         System.out.println(query);
@@ -76,6 +77,7 @@ public class ServerInterface{
         //upload hazards in json to php (to use json_decode)
         //Hazard parameter should be encoded as json already
 
+        //Set Post connection
         URL url = new URL(site + "/update.php");
         HttpURLConnection conn = (HttpURLConnection) url.openConnection();
         conn.setDoOutput(true);
@@ -96,24 +98,6 @@ public class ServerInterface{
             response.append(inputLine);
         }
         in.close();
-    }
-
-    // TODO: remove test
-
-    public static void main(String[] args){
-        // try {
-        //    System.out.println(server.getHazards(new Location(52.213388, 0.102448)).toString(4));
-        // }catch (IOException | JSONException e) {
-        //    e.printStackTrace();
-        // }
-
-        // try{
-        //     JSONObject json = new JSONObject(
-        //             "{\"update\":{\"expires\":\"2016-10-01 00:00:00\",\"response\":\"ack\", \"id\":\"27\"}}");
-        //     System.out.println(server.uploadHazards(json));
-        // }catch (IOException | JSONException e) {
-        //     e.printStackTrace();
-        // }
     }
 
 }
